@@ -1,14 +1,18 @@
 <launch>
+  <arg name="Airsim_ip" default="localhost" />
+  <!-- Port of the Airsim computer (0 is default!) -->
+  <arg name="Airsim_port" default="0" />
+  <arg name="Airsim_startup_takeoff" default="0" />
+
   <node pkg="airsim_img_publisher"
     type="airsim_imgPublisher"
     name="airsim_imgPublisher"
     output="screen">
 
     <!-- IP of the Airsim computer -->
-    <param name="Airsim_ip" value="localhost"/>
-
-    <!-- Port of the Airsim computer (this is default, do not change!) -->
-    <param name="Airsim_port" value="42451"/>
+    <param name="Airsim_ip" value="$(arg Airsim_ip)"/>
+    <param name="Airsim_port" value="$(arg Airsim_port)"/>
+    <param name="Airsim_startup_takeoff" value="$(arg Airsim_startup_takeoff)" />
 
     <!-- RGB camera parameters (parameters when calibrated) -->
     <param name="Fx" value="320"/>

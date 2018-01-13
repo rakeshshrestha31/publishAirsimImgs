@@ -3,7 +3,8 @@
 #include "vehicles/multirotor/api/MultirotorRpcLibClient.hpp"
 #include "common/Common.hpp"
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Twist.h>
+#include <cmath>
 
 using namespace std;
 string localization_method;
@@ -61,13 +62,13 @@ int main(int argc, char **argv)
     [&](const geometry_msgs::TwistConstPtr &twist_msg) {
       if (twist_msg->angular.z)
       {
-        client->rotateByYawRate(-twist_msg->angular.z, TELEOP_DURATION);
+        client->rotateByYawRate(-twist_msg->angular.z*180/M_PI, TELEOP_DURATION);
       }
       else
       {
         using namespace msr::airlib;
         auto global_velocity = VectorMathT<Vector3r, Quaternionr, real_T>::transformToWorldFrame(
-          (Vector3r() << twist_msg->linear.x, twist_msg->linear.y, twist_msg->linear.z).finished(), 
+          (Vector3r() << twist_msg->linear.x, twist_msg->linear.y, -twist_msg->linear.z).finished(), 
           client->getOrientation()
         );
         client->moveByVelocity(

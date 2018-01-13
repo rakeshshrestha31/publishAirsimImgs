@@ -1,9 +1,12 @@
+#define TELEOP_DURATION 2.0
+
 // #define PUBLISH_DISPARITY
 #undef PUBLISH_DISPARITY
 
 #include "std_msgs/String.h"
 #include <image_transport/image_transport.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Twist.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sstream>
@@ -40,13 +43,13 @@ sensor_msgs::CameraInfo getCameraParams(){
     sensor_msgs::CameraInfo CameraParam;
 
     // Read camera parameters from launch file
-    ros::param::get("/airsim_imgPublisher/Tx",Tx);
-    ros::param::get("/airsim_imgPublisher/Fx",Fx);
-    ros::param::get("/airsim_imgPublisher/Fy",Fy);
-    ros::param::get("/airsim_imgPublisher/cx",cx);
-    ros::param::get("/airsim_imgPublisher/cy",cy);
-    ros::param::get("/airsim_imgPublisher/scale_x",width);
-    ros::param::get("/airsim_imgPublisher/scale_y",height);
+    ros::param::get("Tx",Tx);
+    ros::param::get("Fx",Fx);
+    ros::param::get("Fy",Fy);
+    ros::param::get("cx",cx);
+    ros::param::get("cy",cy);
+    ros::param::get("scale_x",width);
+    ros::param::get("scale_y",height);
 
     //CameraParam.header.frame_id = "camera";
     CameraParam.header.frame_id = localization_method;
@@ -134,21 +137,21 @@ int main(int argc, char **argv)
     
   //Start ROS ----------------------------------------------------------------
   ros::init(argc, argv, "airsim_imgPublisher");
-  ros::NodeHandle n;
-  ros::Rate loop_rate(20);
+  ros::NodeHandle n("~");
+  ros::Rate loop_rate(60);
 
     
   //Publishers ---------------------------------------------------------------
   image_transport::ImageTransport it(n);
 
   // image_transport::Publisher imgL_pub = it.advertise("/Airsim/left/image_raw", 1);
-  image_transport::Publisher imgR_pub = it.advertise("/Airsim/right/image_raw", 1);
-  image_transport::Publisher depth_pub = it.advertise("/Airsim/depth", 1);
+  image_transport::Publisher imgR_pub = it.advertise("right/image_raw", 1);
+  image_transport::Publisher depth_pub = it.advertise("depth", 1);
 
-   ros::Publisher imgParamL_pub = n.advertise<sensor_msgs::CameraInfo> ("/Airsim/left/camera_info", 1);
-  ros::Publisher imgParamR_pub = n.advertise<sensor_msgs::CameraInfo> ("/Airsim/right/camera_info", 1);
-  ros::Publisher imgParamDepth_pub = n.advertise<sensor_msgs::CameraInfo> ("/Airsim/camera_info", 1);
-  ros::Publisher disparity_pub = n.advertise<stereo_msgs::DisparityImage> ("/Airsim/disparity", 1);
+   ros::Publisher imgParamL_pub = n.advertise<sensor_msgs::CameraInfo> ("left/camera_info", 1);
+  ros::Publisher imgParamR_pub = n.advertise<sensor_msgs::CameraInfo> ("right/camera_info", 1);
+  ros::Publisher imgParamDepth_pub = n.advertise<sensor_msgs::CameraInfo> ("camera_info", 1);
+  ros::Publisher disparity_pub = n.advertise<stereo_msgs::DisparityImage> ("disparity", 1);
   //ROS Messages
   sensor_msgs::ImagePtr msgImgL, msgImgR, msgDepth;
   sensor_msgs::CameraInfo msgCameraInfo;
@@ -156,17 +159,20 @@ int main(int argc, char **argv)
   //Parameters for communicating with Airsim
   string ip_addr;
   int portParam;
-  ros::param::get("/airsim_imgPublisher/Airsim_ip",ip_addr);
-  ros::param::get("/airsim_imgPublisher/Airsim_port", portParam);
+  ros::param::param<std::string>("~Airsim_ip",ip_addr,"localhost");
+  ros::param::param<int>("~Airsim_port", portParam, 0);
   uint16_t port = portParam;
 
   // Parameter for localizing camera
-  if(!ros::param::get("/airsim_imgPublisher/localization_method", localization_method)){
+  if(!ros::param::get("~localization_method", localization_method)){
     ROS_FATAL_STREAM("you have not set the localization method");
     return -1;
   }
 
-   //this connects us to the drone 
+  int is_startup_takeoff=0;
+  ros::param::param<int>("~Airsim_startup_takeoff", is_startup_takeoff, 0);
+
+  //this connects us to the drone 
   if (!port)
   {
     client = new msr::airlib::MultirotorRpcLibClient(ip_addr);  
@@ -178,6 +184,13 @@ int main(int argc, char **argv)
   //client->enableApiControl(false);
   client->confirmConnection();
   client->enableApiControl(true);
+  
+  if (is_startup_takeoff)
+  {
+    ROS_INFO("Waiting to take off");
+    client->takeoff(2);
+    ROS_INFO("took off");
+  }
 
   //Verbose
   ROS_INFO("Image publisher started! Connecting to:");
@@ -186,13 +199,34 @@ int main(int argc, char **argv)
   
   //Local variables
   input_sampler input_sample__obj(ip_addr.c_str(), port, localization_method);
-   msgCameraInfo = getCameraParams();
+  msgCameraInfo = getCameraParams();
 
-  
-   
- 
-  std::thread poll_frame_thread(&input_sampler::poll_frame, &input_sample__obj);
+  // std::thread poll_frame_thread(&input_sampler::poll_frame, &input_sample__obj);
   signal(SIGINT, sigIntHandler);
+
+  auto drive_train = msr::airlib::DrivetrainType::MaxDegreeOfFreedom;
+  msr::airlib::YawMode yaw_mode(true, 0);
+  ros::Subscriber cmd_vel_sub = n.subscribe<geometry_msgs::Twist>(
+    "cmd_vel", 100,
+    [&](const geometry_msgs::TwistConstPtr &twist_msg) {
+      if (twist_msg->angular.z)
+      {
+        client->rotateByYawRate(-twist_msg->angular.z*180/M_PI, TELEOP_DURATION);
+      }
+      else
+      {
+        using namespace msr::airlib;
+        auto global_velocity = VectorMathT<Vector3r, Quaternionr, real_T>::transformToWorldFrame(
+          (Vector3r() << twist_msg->linear.x, twist_msg->linear.y, -twist_msg->linear.z).finished(), 
+          client->getOrientation()
+        );
+        client->moveByVelocity(
+          global_velocity(0), global_velocity(1), global_velocity(2),
+          TELEOP_DURATION, drive_train, yaw_mode
+        );
+      }
+    }
+  );
 
   // *** F:DN end of communication with simulator (Airsim)
   while (ros::ok())
@@ -266,7 +300,7 @@ int main(int argc, char **argv)
     imgR_pub.publish(msgImgR);
     imgParamR_pub.publish(msgCameraInfo);
 
-    loop_rate.sleep();
+    // loop_rate.sleep();
 #endif    
 
     ros::spinOnce();
