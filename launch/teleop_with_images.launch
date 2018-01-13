@@ -1,0 +1,18 @@
+<launch>
+	<node pkg="airsim_img_publisher"
+	    type="airsim_imgPublisher"
+	    name="airsim_imgPublisher"
+	    output="screen">
+
+    <!-- IP of the Airsim computer -->
+    <param name="Airsim_ip" value="localhost"/>
+
+    <!-- Port of the Airsim computer (0 is default!) -->
+    <param name="Airsim_port" value="0"/>
+  </node>
+
+  <node pkg="airsim_img_publisher" type="airsim_teleop" name="airsim_teleop"  output="screen">
+  	<param name="Airsim_startup_takeoff" value="0" />
+  </node>
+
+</launch>

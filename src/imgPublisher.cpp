@@ -1,3 +1,6 @@
+// #define PUBLISH_DISPARITY
+#undef PUBLISH_DISPARITY
+
 #include "std_msgs/String.h"
 #include <image_transport/image_transport.h>
 #include <nav_msgs/Odometry.h>
@@ -132,7 +135,7 @@ int main(int argc, char **argv)
   //Start ROS ----------------------------------------------------------------
   ros::init(argc, argv, "airsim_imgPublisher");
   ros::NodeHandle n;
-  ros::Rate loop_rate(60);
+  ros::Rate loop_rate(20);
 
     
   //Publishers ---------------------------------------------------------------
@@ -164,9 +167,17 @@ int main(int argc, char **argv)
   }
 
    //this connects us to the drone 
-  client = new msr::airlib::MultirotorRpcLibClient(ip_addr, port);
+  if (!port)
+  {
+    client = new msr::airlib::MultirotorRpcLibClient(ip_addr);  
+  }
+  else
+  {
+    client = new msr::airlib::MultirotorRpcLibClient(ip_addr, port);
+  }
   //client->enableApiControl(false);
-
+  client->confirmConnection();
+  client->enableApiControl(true);
 
   //Verbose
   ROS_INFO("Image publisher started! Connecting to:");
@@ -186,7 +197,7 @@ int main(int argc, char **argv)
   // *** F:DN end of communication with simulator (Airsim)
   while (ros::ok())
   {
-    
+#ifdef PUBLISH_DISPARITY
     auto imgs = input_sample__obj.image_decode();
     //auto imgs = input_sample__obj.poll_frame_and_decode();
     if (!imgs.valid_data) {
@@ -242,7 +253,22 @@ int main(int argc, char **argv)
     imgParamR_pub.publish(msgCameraInfo);
     imgParamDepth_pub.publish(msgCameraInfo);
     disparity_pub.publish(disparityImg);
-    
+#else
+    std::vector<uint8_t> rgb_img_data = client->simGetImage(
+      0, msr::airlib::ImageCaptureBase::ImageType::Scene
+    );
+    #if CV_MAJOR_VERSION==3
+        cv::Mat rgb_img_mat = cv::imdecode(rgb_img_data, cv::IMREAD_COLOR);
+    #else
+        cv::Mat rgb_img_mat = cv::imdecode(rgb_img_data, CV_LOAD_IMAGE_COLOR);
+    #endif
+    msgImgR = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_img_mat).toImageMsg();
+    imgR_pub.publish(msgImgR);
+    imgParamR_pub.publish(msgCameraInfo);
+
+    loop_rate.sleep();
+#endif    
+
     ros::spinOnce();
     
     //loop_rate.sleep();

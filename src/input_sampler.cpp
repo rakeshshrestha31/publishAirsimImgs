@@ -16,6 +16,11 @@ input_sampler::input_sampler() : client(0), localization_method("ground_truth")
 	connect();
 }
 
+input_sampler::input_sampler(msr::airlib::MultirotorRpcLibClient *_client, std::string _localization_method) : client(_client), localization_method(_localization_method)
+{
+
+}
+
 input_sampler::input_sampler(const std::string& ip_addr, uint16_t port) : client(0), localization_method("ground_truth")
 {
 	connect(ip_addr, port);
@@ -95,7 +100,7 @@ void input_sampler::poll_frame()
     
     
     std::ofstream file_to_output_2;
-    file_to_output_2.open("/home/nvidia/catkin_ws/src/publishAirsimImgs/src/timing_t1.txt",
+    file_to_output_2.open("timing_t1.txt",
          std::ios_base::app);
 
     
@@ -157,7 +162,7 @@ void input_sampler::do_nothing(void) {
 
 struct image_response_decoded input_sampler::image_decode(void){
     try{ 
-    file_to_output.open("/home/nvidia/catkin_ws/src/publishAirsimImgs/src/timing.txt",
+    file_to_output.open("timing.txt",
              std::ios_base::app);
     
     image_response_queue_mutex.lock(); 
@@ -169,9 +174,9 @@ struct image_response_decoded input_sampler::image_decode(void){
     }
     steady_clock::time_point partf2_s; //one invocation of tracker start
     steady_clock::time_point partf2_e; //one invocation of tracker start
-    //using ImageRequest = msr::airlib::VehicleCameraBase::ImageRequest;
-	//using ImageResponse = msr::airlib::VehicleCameraBase::ImageResponse;
-	//using ImageType = msr::airlib::VehicleCameraBase::ImageType;
+    //using ImageRequest = msr::airlib::ImageCaptureBase::ImageRequest;
+	//using ImageResponse = msr::airlib::ImageCaptureBase::ImageResponse;
+	//using ImageType = msr::airlib::ImageCaptureBase::ImageType;
 
     
     //std::vector<ImageRes> response = image_response_queue.front();
@@ -190,7 +195,7 @@ struct image_response_decoded input_sampler::image_decode(void){
 #else
 		// result.left = cv::imdecode(response.at(0).image_data_uint8, CV_LOAD_IMAGE_COLOR);
 		result.right = cv::imdecode(response.image.at(0).image_data_uint8, CV_LOAD_IMAGE_COLOR);
-		result.depth = cv::imdecode(response.image.at(1).image.image_data_uint8, CV_LOAD_IMAGE_GRAYSCALE);
+		result.depth = cv::imdecode(response.image.at(1).image_data_uint8, CV_LOAD_IMAGE_GRAYSCALE);
 #endif
 
         result.depth.convertTo(result.depth, CV_32FC1, 1.0/2.56);
@@ -245,7 +250,7 @@ struct image_response_decoded input_sampler::image_decode(void){
 struct image_response_decoded input_sampler::poll_frame_and_decode()
 {
 	
-    file_to_output.open("/home/nvidia/catkin_ws/src/publishAirsimImgs/src/timing.txt",
+    file_to_output.open("timing.txt",
              std::ios_base::app);
     steady_clock::time_point allf_s; //total function time s
     steady_clock::time_point allf_e; //total function time e
@@ -261,9 +266,9 @@ struct image_response_decoded input_sampler::poll_frame_and_decode()
     
     
     
-    //using ImageRequest = msr::airlib::VehicleCameraBase::ImageRequest;
-	//using ImageResponse = msr::airlib::VehicleCameraBase::ImageResponse;
-	//using ImageType = msr::airlib::VehicleCameraBase::ImageType;
+    //using ImageRequest = msr::airlib::ImageCaptureBase::ImageRequest;
+	//using ImageResponse = msr::airlib::ImageCaptureBase::ImageResponse;
+	//using ImageType = msr::airlib::ImageCaptureBase::ImageType;
 
 	struct image_response_decoded result;
 	const int max_tries = 1000000;

@@ -8,11 +8,10 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
 #include "common/Common.hpp"
-using ImageReq = msr::airlib::VehicleCameraBase::ImageRequest;
-using ImageRes = msr::airlib::VehicleCameraBase::ImageResponse;
-using ImageTyp = msr::airlib::VehicleCameraBase::ImageType;
 
-
+using ImageReq = msr::airlib::ImageCaptureBase::ImageRequest;
+using ImageRes = msr::airlib::ImageCaptureBase::ImageResponse;
+using ImageTyp = msr::airlib::ImageCaptureBase::ImageType;
 
 //#include "configs.h"
 // Control functions
@@ -42,13 +41,14 @@ struct image_response{
 
 
 
-using ImageResponse = msr::airlib::VehicleCameraBase::ImageResponse;
+using ImageResponse = msr::airlib::ImageCaptureBase::ImageResponse;
 
 class input_sampler {
 public:
 	input_sampler();
 	input_sampler(const std::string& ip_addr, uint16_t port);
 	input_sampler(const std::string& ip_addr, uint16_t port, std::string localization_method);
+    input_sampler(msr::airlib::MultirotorRpcLibClient *client, std::string localization_method);
 	~input_sampler();
 
 	// *** F:DN Control functions
