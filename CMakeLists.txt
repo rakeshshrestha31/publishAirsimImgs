@@ -91,6 +91,11 @@ target_link_libraries(airsim_imgPublisher ${catkin_LIBRARIES} AirLib  MavLinkCom
 
 add_dependencies(airsim_imgPublisher airsim_img_publisher_generate_messages_cpp)
 
+add_executable(car_driver 
+               src/car_driver.cpp
+               src/HelperFunctions/QuatRotEuler.cpp)
+target_link_libraries(car_driver ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
+
 add_executable(airsim_teleop 
                src/teleop.cpp)
 target_link_libraries(airsim_teleop ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
