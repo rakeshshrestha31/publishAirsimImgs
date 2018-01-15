@@ -29,8 +29,8 @@ msr::airlib::MultirotorRpcLibClient * client;
 extern std::mutex client_mutex;
 void sigIntHandler(int sig)
 {
-    //my_thread.join(); 
-    client_mutex.lock(); 
+    //my_thread.join();
+    client_mutex.lock();
     ros::shutdown();
     //exit(0);
     //client_mutex.unlock();
@@ -60,14 +60,14 @@ sensor_msgs::CameraInfo getCameraParams(){
     CameraParam.distortion_model = "plumb_bob";
     CameraParam.D = {0.0, 0.0, 0.0, 0.0, 0.0};
 
-    CameraParam.K = {Fx,  0.0, cx, 
-                     0.0, Fy,  cy, 
+    CameraParam.K = {Fx,  0.0, cx,
+                     0.0, Fy,  cy,
                      0.0, 0.0, 1};
-    CameraParam.R = {1.0, 0.0, 0.0, 
+    CameraParam.R = {1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
                      0.0, 0.0, 1.0};
-    CameraParam.P = {Fx,  0.0, cx,  Tx, 
-                     0.0, Fy,  cy,  0.0, 
+    CameraParam.P = {Fx,  0.0, cx,  Tx,
+                     0.0, Fy,  cy,  0.0,
                      0.0, 0.0, 1.0, 0.0};
 
     CameraParam.binning_x = 0;
@@ -95,14 +95,14 @@ void CameraPosePublisher(geometry_msgs::Pose CamPose, geometry_msgs::Pose CamPos
     q_cam = quatProd(q_body2cam, q_cam);
     transformCamera.setRotation(tf::Quaternion(q_cam.x,
                                              q_cam.y,
-                                             q_cam.z, 
+                                             q_cam.z,
                                              q_cam.w));
 
     if (localization_method != "ground_truth" && localization_method !="orb_slam2_rgbd"){ //note that slam itself posts this transform
         br.sendTransform(tf::StampedTransform(transformCamera, ros::Time::now(), "world", localization_method));
-    }  
-    
-    
+    }
+
+
     //ground truth values
     static tf::TransformBroadcaster br_gt;
     tf::Transform transformQuad_gt, transformCamera_gt;
@@ -120,7 +120,7 @@ void CameraPosePublisher(geometry_msgs::Pose CamPose, geometry_msgs::Pose CamPos
     q_cam_gt = quatProd(q_body2cam_gt, q_cam_gt);
     transformCamera_gt.setRotation(tf::Quaternion(q_cam_gt.x,
                                              q_cam_gt.y,
-                                             q_cam_gt.z, 
+                                             q_cam_gt.z,
                                              q_cam_gt.w));
     br_gt.sendTransform(tf::StampedTransform(transformCamera_gt, ros::Time::now(), "world", "ground_truth"));
 }
@@ -133,14 +133,14 @@ void do_nothing(){
 
 int main(int argc, char **argv)
 {
-  
-    
+
+
   //Start ROS ----------------------------------------------------------------
   ros::init(argc, argv, "airsim_imgPublisher");
   ros::NodeHandle n("~");
   ros::Rate loop_rate(60);
 
-    
+
   //Publishers ---------------------------------------------------------------
   image_transport::ImageTransport it(n);
 
@@ -172,10 +172,10 @@ int main(int argc, char **argv)
   int is_startup_takeoff=0;
   ros::param::param<int>("~Airsim_startup_takeoff", is_startup_takeoff, 0);
 
-  //this connects us to the drone 
+  //this connects us to the drone
   if (!port)
   {
-    client = new msr::airlib::MultirotorRpcLibClient(ip_addr);  
+    client = new msr::airlib::MultirotorRpcLibClient(ip_addr);
   }
   else
   {
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
   //client->enableApiControl(false);
   client->confirmConnection();
   client->enableApiControl(true);
-  
+
   if (is_startup_takeoff)
   {
     ROS_INFO("Waiting to take off");
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
   ROS_INFO("Image publisher started! Connecting to:");
   ROS_INFO("IP: %s", ip_addr.c_str());
   ROS_INFO("Port: %d", port);
-  
+
   //Local variables
   input_sampler input_sample__obj(ip_addr.c_str(), port, localization_method);
   msgCameraInfo = getCameraParams();
@@ -208,7 +208,8 @@ int main(int argc, char **argv)
   msr::airlib::YawMode yaw_mode(true, 0);
   ros::Subscriber cmd_vel_sub = n.subscribe<geometry_msgs::Twist>(
     "cmd_vel", 100,
-    [&](const geometry_msgs::TwistConstPtr &twist_msg) {
+	(boost::function<void (const geometry_msgs::TwistConstPtr &)>)
+	[&](const geometry_msgs::TwistConstPtr &twist_msg) -> void {
       if (twist_msg->angular.z)
       {
         client->rotateByYawRate(-twist_msg->angular.z*180/M_PI, TELEOP_DURATION);
@@ -217,7 +218,7 @@ int main(int argc, char **argv)
       {
         using namespace msr::airlib;
         auto global_velocity = VectorMathT<Vector3r, Quaternionr, real_T>::transformToWorldFrame(
-          (Vector3r() << twist_msg->linear.x, twist_msg->linear.y, -twist_msg->linear.z).finished(), 
+          (Vector3r() << twist_msg->linear.x, twist_msg->linear.y, -twist_msg->linear.z).finished(),
           client->getOrientation()
         );
         client->moveByVelocity(
@@ -238,15 +239,15 @@ int main(int argc, char **argv)
         continue;
     }
 
-    
+
     cv::Mat disparityImageMat;
     imgs.depth.convertTo(disparityImageMat, CV_8UC1);
     stereo_msgs::DisparityImage disparityImg;
     disparityImg.header.stamp = ros::Time::now();
-    
+
     disparityImg.header.frame_id= localization_method;
     //disparityImg.header.frame_id= "camera";
-    
+
     disparityImg.f = 128; //focal length, half of the image width
     disparityImg.T = .14; //baseline, half of the distance between the two cameras
     disparityImg.min_disparity = .44; // f.t/z(depth max)
@@ -258,7 +259,7 @@ int main(int argc, char **argv)
     disparityImg.valid_window.height =  144;
     disparityImg.valid_window.width =  256;
     disparityImg.valid_window.do_rectify =  false; //possibly change
-    
+
 
 
     // *** F:DN conversion of opencv images to ros images
@@ -301,13 +302,12 @@ int main(int argc, char **argv)
     imgParamR_pub.publish(msgCameraInfo);
 
     // loop_rate.sleep();
-#endif    
+#endif
 
     ros::spinOnce();
-    
+
     //loop_rate.sleep();
   }
   //poll_frame_thread.join();
   return 0;
 }
-
