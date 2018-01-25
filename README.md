@@ -1,3 +1,10 @@
+# Note
+You need to compile the AirSim library using g++ compiler instead of the Clang compiler that the original AirSim uses. I have a fork of AirSim that compiles using g++ [https://github.com/rakeshshrestha31/AirSim](https://github.com/rakeshshrestha31/AirSim). Give the path to the AirSim folder as environment variable AIRSIM_PATH before building the project.
+
+```
+export AIRSIM_PATH=<your airsim root directory compiled with g++>
+```
+
 # Disclaimer
 Most of the code in this repo was developed by Behzad Boroujerdian and Hasan Genc from the Department Of Electrical and Computer Engineering at The University of Texas at Austin. I put some finishing touches and wrote the guidelines below in the hope that this will be useful for others. This is supposed to be a preliminary solution while Microsoft don't provide an alternative one.
 
