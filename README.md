@@ -5,6 +5,11 @@ You need to compile the AirSim library using g++ compiler instead of the Clang c
 export AIRSIM_PATH=<your airsim root directory compiled with g++>
 ```
 
+## Demo: using AirSim RGB images to perform 3D reconstruction of a scene
+[![AirSim DSO 3D reconstruction](https://img.youtube.com/vi/3PJYdr5qQ6A/0.jpg)](https://www.youtube.com/watch?v=3PJYdr5qQ6A "AirSim DSO 3D reconstruction")
+
+Uses DSO (Engel et. al.) for 3D reconstruction/localization using only grayscale images
+
 # Disclaimer
 Most of the code in this repo was developed by Behzad Boroujerdian and Hasan Genc from the Department Of Electrical and Computer Engineering at The University of Texas at Austin. I put some finishing touches and wrote the guidelines below in the hope that this will be useful for others. This is supposed to be a preliminary solution while Microsoft don't provide an alternative one.
 
