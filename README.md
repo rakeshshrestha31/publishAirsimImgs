@@ -10,7 +10,7 @@ The modified fork can be found [in this repository](https://github.com/aravindk2
 This `publishAirsimImgs` repository contains a simple example to demonstrate the link betweeen AirSim v1.2, Unreal 4.18 and ROS Kinetic tested on Ubuntu 16.04.  
 I have written a simple example modifiying the code already developed by the previous contributors mentioned in the `Disclaimer` section and incorporated new APIs to stream images on a ROS topic called **front_center/image_raw** visualized on RVIZ. This data is obtained from the `front_center` camera of a car model used in AirSim whose movements are controlled by the `teleop` code written for TurtleBot. The video below shows the demonstration of this example.  
   
-[AirSim_to_RVIZ_image_streaming](../extras/airsim_to_rviz.mp4)
+[![AirSim_to_RVIZ_image_streaming](extras/airsim_rviz_picture.png)](https://youtu.be/Ubqx9WifekQ)
   
 
 This is still work in progress and I will update in detail on how to build and run the example.
