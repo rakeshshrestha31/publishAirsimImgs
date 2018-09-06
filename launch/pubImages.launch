@@ -1,37 +1,37 @@
 <launch>
-  <arg name="Airsim_ip" default="localhost" />
-  <!-- Port of the Airsim computer (0 is default!) -->
-  <arg name="Airsim_port" default="0" />
-  <arg name="Airsim_startup_takeoff" default="0" />
+    <arg name="Airsim_ip" default="192.168.0.107" />
+    <!-- Port of the Airsim computer (0 is default!) -->
+    <arg name="Airsim_port" default="41451" />
+    <!-- <arg name="Airsim_startup_takeoff" default="0" /> -->
 
-  <node pkg="airsim_img_publisher"
-    type="airsim_imgPublisher"
-    name="airsim_imgPublisher"
-    output="screen">
+    <node pkg="airsim_img_publisher"
+        type="simple_image"
+        name="simple_image"
+        output="screen">
 
-    <!-- IP of the Airsim computer -->
-    <param name="Airsim_ip" value="$(arg Airsim_ip)"/>
-    <param name="Airsim_port" value="$(arg Airsim_port)"/>
-    <param name="Airsim_startup_takeoff" value="$(arg Airsim_startup_takeoff)" />
+        <!-- IP of the Airsim computer -->
+        <param name="Airsim_ip" value="$(arg Airsim_ip)"/>
+        <param name="Airsim_port" value="$(arg Airsim_port)"/>
+        <!-- <param name="Airsim_startup_takeoff" value="$(arg Airsim_startup_takeoff)" /> -->
 
-    <!-- RGB camera parameters (parameters when calibrated) -->
-    <param name="Fx" value="320"/>
-    <param name="Fy" value="320"/>
-    <param name="cx" value="320"/>
-    <param name="cy" value="240"/>
-    <param name="width" value="640"/>  <!-- Width when calibrated!-->
-    <param name="height" value="480"/> <!-- Height when calibrated!-->
+        <!-- RGB camera parameters (parameters when calibrated) -->
+        <param name="Fx" value="320"/>
+        <param name="Fy" value="320"/>
+        <param name="cx" value="320"/>
+        <param name="cy" value="240"/>
+        <param name="width" value="640"/>  <!-- Width when calibrated!-->
+        <param name="height" value="480"/> <!-- Height when calibrated!-->
 
-    <param name="localization_method" value="ground_truth" />
+        <!-- <param name="localization_method" value="ground_truth" /> -->
 
-    <!-- Depth baseline -->
-    <param name="Tx" value="0.14"/> 
-    <param name="scale" value="0.38"/> 
+        <!-- Depth baseline -->
+        <param name="Tx" value="0.14"/> 
+        <param name="scale" value="0.38"/> 
 
-    <!-- Topic with odometry information for the vehicle (used to create tf tree) -->
-    <param name="odomTopic" value="/mavros/local_position/odom"/>
+        <!-- Topic with odometry information for the vehicle (used to create tf tree) -->
+        <param name="odomTopic" value="/mavros/local_position/odom"/>
 
 
-  </node>
+    </node>
 </launch>
 
