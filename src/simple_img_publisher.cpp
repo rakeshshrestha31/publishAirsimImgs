@@ -21,6 +21,10 @@
 msr::airlib::CarRpcLibClient* client;
 
 const std::string camera_front_center = "front_center";
+//const std::string camera_front_left = "front_left";
+//const std::string camera_front_right = "front_right";
+//const std::string camera_fpv = "fpv";
+//const std::string camera_back_center = "back_center";
 
 sensor_msgs::CameraInfo getCameraParams(){
     double Tx, Fx, Fy, cx, cy, width, height;
