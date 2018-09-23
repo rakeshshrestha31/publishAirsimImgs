@@ -83,6 +83,12 @@ cd ~/catkin_ws
 catkin_make
 ```
 
+- Install Python Airsim APIs
+```
+# AirSim APIs
+pip install airsim
+```
+
 # Run
 
 - Run Unreal Engine 4.18
@@ -104,6 +110,13 @@ roslaunch airsim_img_publisher mavrosAirsim.launch
 ```
 roslaunch airsim_img_publisher pubImages.launch
 ```
+
+- To run the Python-based Airsim interface, run the following instead of pubimages.launch:
+
+```
+rosrun airsim_img_publisher airsim_iface.py
+```
+
 
 - Run the TurtleBot's teleop node to control the car in the AirSim environment. Note, you will need the ros-kinetic-turtlebot package for this.
 ```
