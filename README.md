@@ -12,13 +12,20 @@ This repository is developed based on the work forked from github user: rakeshsh
   
 [![AirSim_to_RVIZ_image_streaming](extras/airsim_rviz_picture.png)](https://youtu.be/Ubqx9WifekQ)
   
+  
+# Install Unreal 4.18, AirSim v1.2 (build with clang++)
+I assume that you already have installed Unreal 4.18 and AirSim v1.2 built on your machine. If not, then follow the link below.
+https://github.com/Microsoft/AirSim/blob/master/docs/build_linux.md  
+
+ Please note that there is another instance of AirSim that has to be built with g++ instead of clang++ and is mentioned in the subsequent steps
+
 
 # Build AirSim using g++
-Here is my fork of the AirSim that can build with g++. [AirSim fork g++](https://github.com/aravindk2604/AirSim.git). Fork this repository and/or dowload it on your machine and navigate to the AirSim directory.  
+This is the other instance of AirSim which is my fork that can build with g++. [AirSim fork g++](https://github.com/aravindk2604/AirSim.git). Fork this repository and/or dowload it on your machine and navigate to the AirSim directory.  
 ```
 git clone https://github.com/aravindk2604/AirSim.git
 ```
-
+Henceforth we only discuss about the AirSim built with g++
 Export the path of the AirSim directory as an environment variable `AIRSIM_PATH` before building the project.
   
 ```
@@ -73,6 +80,16 @@ Make clang 3.9 as the default version by the command:
 ```
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 60 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-3.9
 ```
+
+- Geoid Model dataset - install this package in your global packages that is common for your entire machine.
+```
+wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
+
+sudo chmod +x install_geographiclib_datasets.sh
+
+./install_geographiclib_datasets.sh
+```
+
 
 - Copy the `publishAirsimImgs` repository into your catkin workspace
 
