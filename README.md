@@ -25,7 +25,7 @@ This is the other instance of AirSim which is my fork that can build with g++. [
 ```
 git clone https://github.com/aravindk2604/AirSim.git
 ```
-Henceforth we only discuss about the AirSim built with g++
+Henceforth I will only discuss about the AirSim built with g++
 Export the path of the AirSim directory as an environment variable `AIRSIM_PATH` before building the project.
   
 ```
@@ -44,7 +44,7 @@ sudo apt-get install libeigen3-dev
 sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
 ```
 - CMAKE 3.12.1
-Follow the answer posted by Teocci on Stack Exchange [link](https://askubuntu.com/questions/355565/how-do-i-install-the-latest-version-of-cmake-from-the-command-line?rq=1)
+Follow the answer posted by `Teocci` on Stack Exchange [link](https://askubuntu.com/questions/355565/how-do-i-install-the-latest-version-of-cmake-from-the-command-line?rq=1)
 
 - Clang++ v3.9 or newer to support C++14
 
@@ -91,7 +91,7 @@ sudo chmod +x install_geographiclib_datasets.sh
 ```
 
 
-- Copy the `publishAirsimImgs` repository into your catkin workspace
+- Git clone this `publishAirsimImgs` repository into your catkin workspace
 
 ```
 cd ~/catkin_ws/src/
