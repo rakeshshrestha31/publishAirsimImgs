@@ -100,6 +100,12 @@ cd ~/catkin_ws
 catkin_make
 ```
 
+- Install MessagePack RPC for Python
+```
+# MessagePack RPC for Python
+pip install msgpack-rpc-python
+```
+
 - Install Python Airsim APIs
 ```
 # AirSim APIs
@@ -138,4 +144,16 @@ rosrun airsim_img_publisher airsim_iface.py
 - Run the TurtleBot's teleop node to control the car in the AirSim environment. Note, you will need the ros-kinetic-turtlebot package for this.
 ```
 roslaunch turtlebot_teleop keyboard_teleop.launch
+```
+
+- Run the built-in ROS depthimage_to_laserscan node to convert the depth images coming from the AirSim virtual depth camera into laser scan data:
+
+```
+roslaunch airsim_img_publisher laserscan.launch
+```
+
+- Run the built-in ROS point_cloud_xyzrgb nodelet to convert the depth images coming from the AirSim virtual depth camera into point cloud data:
+
+```
+roslaunch airsim_img_publisher pointcloud.launch
 ```

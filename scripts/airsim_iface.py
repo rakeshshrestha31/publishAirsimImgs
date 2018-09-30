@@ -9,7 +9,7 @@ import cv2
 from numpy.lib.stride_tricks import as_strided
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import PointCloud2, PointField, LaserScan
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Pose, PoseStamped, TransformStamped
 import math
@@ -70,56 +70,6 @@ name_to_dtypes = {
 	"64FC4":   (np.float64, 4)
 }
 
-projectionMatrix = np.array([[-0.501202762, 0.000000000, 0.000000000, 0.000000000],
-                              [0.000000000, -0.501202762, 0.000000000, 0.000000000],
-                              [0.000000000, 0.000000000, 10.00000000, 100.00000000],
-                              [0.000000000, 0.000000000, -10.0000000, 0.000000000]])
-                              
-def get_point_cloud(client, rgb, stamp=None, frame_id='0', seq=None):
-    msg = PointCloud2()
-    rawImage = client.simGetImage("0", airsim.ImageType.DepthPerspective)
-    if (rawImage is None):
-        print("Camera is not returning image, please check airsim for error messages")
-        airsim.wait_key("Press any key to exit")
-        sys.exit(0)
-    else:
-        png = cv2.imdecode(np.frombuffer(rawImage, np.uint8) , cv2.IMREAD_UNCHANGED)
-        gray = cv2.cvtColor(png, cv2.COLOR_BGR2GRAY)
-        points = cv2.reprojectImageTo3D(gray, projectionMatrix)
-        
-        
-        buf = []
-        
-        msg.header.frame_id = frame_id
-
-        if stamp:
-            msg.header.stamp = stamp           
-        if seq: 
-            msg.header.seq = seq
-        if len(points.shape) == 3:
-            msg.height = points.shape[1]
-            msg.width = points.shape[0]
-        else:
-            N = len(points)
-            xyzrgb = np.array(np.hstack([points, rgb]), dtype=np.float32)
-            msg.height = 1
-            msg.width = N
-    
-            msg.fields = [
-                PointField('x', 0, PointField.FLOAT32, 1),
-                PointField('y', 4, PointField.FLOAT32, 1),
-                PointField('z', 8, PointField.FLOAT32, 1),
-                PointField('r', 12, PointField.FLOAT32, 1),
-                PointField('g', 16, PointField.FLOAT32, 1),
-                PointField('b', 20, PointField.FLOAT32, 1)
-            ]
-            msg.is_bigendian = False
-            msg.point_step = 24
-            msg.row_step = msg.point_step * N
-            msg.is_dense = True; 
-            msg.data = xyzrgb.tostring()
-
-    return msg
 
 def numpy_to_image(arr, encoding):
 	if not encoding in name_to_dtypes:
@@ -190,6 +140,8 @@ def get_camera_params():
     camera_info_msg.distortion_model = 'plumb_bob'
     camera_info_msg.width = width
     camera_info_msg.height = height
+    camera_info_msg.roi.width = width
+    camera_info_msg.roi.height = height
     camera_info_msg.K = [Fx, 0, Cx,
                          0, Fy, Cy,
                          0, 0, 1]
@@ -252,8 +204,7 @@ def get_image_messages(client):
     scene_img1d = np.fromstring(responses[0].image_data_uint8, dtype=np.uint8)         # get numpy array
     scene_img_rgba = scene_img1d.reshape(responses[0].height, responses[0].width, 4)   # reshape array to image array H X W
     
-    #create RGB Numpy array for use in producing XYZRGB point cloud
-    rgb_raw = scene_img_rgba[:,:,:2]
+
 
     # convert depth float array to NumPy 2D array using
     depth_img = airsim.list_to_2d_float_array(responses[1].image_data_float, responses[1].width, responses[1].height)
@@ -262,7 +213,7 @@ def get_image_messages(client):
     rgb_msg = numpy_to_image(scene_img_rgba, "rgba8")
     depth_msg = numpy_to_image(depth_img, "32FC1")
 
-    return rgb_msg, depth_msg, rgb_raw
+    return rgb_msg, depth_msg
 
 class Interface(object):
     def __init__(self):
@@ -313,13 +264,13 @@ class Interface(object):
         
         #subscribe to velocity commands from teleop or path planner node
         self.twist_cmd_sub = rospy.Subscriber("/cmd_vel_mux/input/teleop", Twist, self.twist_cmd_callback)
+             
         
         ## Publishers --------------------------------------------------------------
         # image publishers
         self.rgb_pub = rospy.Publisher("front_center/image_raw", Image, queue_size=1)
         self.depth_pub = rospy.Publisher("front_center/depth", Image, queue_size=1)
-        #point cloud publisher
-        self.point_cloud_pub = rospy.Publisher("front_center/point_cloud", PointCloud2, queue_size=1)
+
         # camera paramters publisher
         self.rgb_cam_pub = rospy.Publisher("front_center/camera_info", CameraInfo, queue_size=1)
         self.depth_cam_pub = rospy.Publisher("front_center/depth/camera_info", CameraInfo, queue_size=1)
@@ -334,6 +285,8 @@ class Interface(object):
     def twist_cmd_callback(self, data):
         self.velocity_cmd = data.linear.x
         self.angular_velocity_cmd = data.angular.z   
+        
+
         
 
 
@@ -401,7 +354,7 @@ class Interface(object):
             camera_info_msg = get_camera_params()
             sim_pose_msg = get_sim_pose(car_state)
             odom_msg = convert_posestamped_to_odom_msg(sim_pose_msg)
-            rgb_msg, depth_msg, rgb_raw = get_image_messages(self.client)
+            rgb_msg, depth_msg = get_image_messages(self.client)
             
     
             # header message
@@ -411,7 +364,7 @@ class Interface(object):
             rgb_msg.header = camera_info_msg.header
             depth_msg.header = camera_info_msg.header
             
-            point_cloud = get_point_cloud(self.client, rgb_raw, stamp=sim_pose_msg.header.stamp)
+
     
             # publish messages
             self.pose_pub.publish(sim_pose_msg)
@@ -421,7 +374,7 @@ class Interface(object):
             self.depth_cam_pub.publish(camera_info_msg)
             self.rgb_pub.publish(rgb_msg)
             self.depth_pub.publish(depth_msg)
-            self.point_cloud_pub.publish(point_cloud)
+
             
 
 
