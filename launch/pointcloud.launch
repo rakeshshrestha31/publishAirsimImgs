@@ -1,0 +1,12 @@
+<launch>
+
+	<node pkg="nodelet" type="nodelet" name="pointcloud"
+		args="load depth_image_proc/point_cloud_xyzrgb record_player_manager --no-bond">
+		<remap from="depth_registered/image_rect" to="/front_center/depth"/>
+		<remap from="depth_registered/points" to="/points"/>
+	 	<remap from="rgb/image_rect_color" to="/front_center/image_raw"/>
+		<remap from="rgb/camera_info" to="/front_center/camera_info"/>
+		<param name="queue_size" value="5" />
+	</node>
+
+</launch>
