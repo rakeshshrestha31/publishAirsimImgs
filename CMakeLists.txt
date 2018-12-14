@@ -13,14 +13,15 @@ message(STATUS " airlib: ${Airlib_addr}")
 add_compile_options(-std=c++11) # -stdlib=libc++)
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF) #behzad added, need this always
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV 2 REQUIRED)
+find_package(OpenCV REQUIRED)
 include_directories(
 # include
     ${Airlib_addr}/include
+    ${Airlib_addr}/include/vehicles
     ${Airlib_addr}/include/controllers
     ${AIRSIM_ROOT}/AirLib/deps/MavLinkCom/include
     ${AIRSIM_ROOT}/AirLib/deps/rpclib/include
-
+    ${AIRSIM_ROOT}/AirLib/deps/rpclib/include/rpc
     ${EIGEN3_INCLUDE_DIR}
     #/usr/local/cuda/include/
    include
@@ -78,24 +79,32 @@ include_directories( # include
  ${PCL_INCLUDE_DIRS}
  )
 
- add_definitions(${PCL_DEFINITIONS})
+add_definitions(${PCL_DEFINITIONS})
 
 
-
-# add_executable(airsim_imgPublisher
+#add_executable(airsim_imgPublisher
 #                src/imgPublisher.cpp
 #                src/input_sampler.cpp
 #                src/HelperFunctions/QuatRotEuler.cpp
 #                src/Callbacks/callbacks.cpp)
-# target_link_libraries(airsim_imgPublisher ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
-#
-# add_dependencies(airsim_imgPublisher airsim_img_publisher_generate_messages_cpp)
+#target_link_libraries(airsim_imgPublisher ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
 
-add_executable(car_driver
-               src/car_driver.cpp
-               src/HelperFunctions/QuatRotEuler.cpp)
-target_link_libraries(car_driver ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
+#add_dependencies(airsim_imgPublisher airsim_img_publisher_generate_messages_cpp)
 
-add_executable(airsim_teleop
-               src/teleop.cpp)
-target_link_libraries(airsim_teleop ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
+#add_executable(car_driver
+#               src/car_driver.cpp
+#               src/HelperFunctions/QuatRotEuler.cpp)
+#target_link_libraries(car_driver ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)
+
+add_executable(simple_image src/simple_img_publisher.cpp)
+target_link_libraries(simple_image ${catkin_LIBRARIES} AirLib MavLinkCom rpc pthread ${OpenCV_LIBS})
+
+add_dependencies(simple_image airsim_img_publisher_generate_messages_cpp)
+
+add_executable(teleop_control
+               src/myTeleop.cpp)
+target_link_libraries(teleop_control ${catkin_LIBRARIES} AirLib MavLinkCom rpc pthread)
+
+#add_executable(airsim_teleop
+#               src/teleop.cpp)
+#target_link_libraries(airsim_teleop ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS} m)

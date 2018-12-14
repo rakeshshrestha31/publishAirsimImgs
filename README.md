@@ -1,75 +1,141 @@
-# Note
-You need to compile the AirSim library using g++ compiler instead of the Clang compiler that the original AirSim uses. I have a fork of AirSim that compiles using g++ [https://github.com/rakeshshrestha31/AirSim](https://github.com/rakeshshrestha31/AirSim). Give the path to the AirSim folder as environment variable AIRSIM_PATH before building the project.
-
-```
-export AIRSIM_PATH=<your airsim root directory compiled with g++>
-```
-
-## Demo: using AirSim RGB images to perform 3D reconstruction of a scene
-[![AirSim DSO 3D reconstruction](https://img.youtube.com/vi/3PJYdr5qQ6A/0.jpg)](https://www.youtube.com/watch?v=3PJYdr5qQ6A "AirSim DSO 3D reconstruction")
-
-Uses DSO (Engel et. al.) for 3D reconstruction/localization using only grayscale images
-
 # Disclaimer
 Most of the code in this repo was developed by Behzad Boroujerdian and Hasan Genc from the Department Of Electrical and Computer Engineering at The University of Texas at Austin. I put some finishing touches and wrote the guidelines below in the hope that this will be useful for others. This is supposed to be a preliminary solution while Microsoft don't provide an alternative one.
 
-# Contents
-This repo allows you to publish images from airsim into ROS.
-Features within this repo:
-- Publishes RGB data into the topic /Airsim/image
-- Publishes depth data into the topic /Airsim/depth
-- Publishes camera calibration parameters into /Airsim/camera_info
-- Publishes a tf tree with the origin, the position/orientation of the quadcoper, and the position/orientation of the camera.
+This repository is developed based on the work forked from github user: rakeshshrestha31  
+
+# Changes
+- Build Microsoft's AirSim with g++ to get it working with ROS as the client
+- Modified AirSim fork can be found [in this repository](https://github.com/aravindk2604/AirSim.git).  
+- `publishAirsimImgs` repository works with Unreal 4.18, AirSim v1.2 and ROS Kinetic tested on Ubuntu 16.04.
+- Example c++ code to stream images from a camera on the car in AirSim to a ROS topic called **front_center/image_raw** visualized on RVIZ. This data is obtained from the `front_center` camera of a car model used in AirSim whose movements are controlled by the `teleop` code written for TurtleBot. The video below shows the demonstration of this example.  
+
+  
+[![AirSim_to_RVIZ_image_streaming](extras/airsim_rviz_picture.png)](https://youtu.be/Ubqx9WifekQ)
+  
+  
+# Install Unreal 4.18, AirSim v1.2 (build with clang++)
+I assume that you already have installed Unreal 4.18 and AirSim v1.2 built on your machine. If not, then follow the link below.
+https://github.com/Microsoft/AirSim/blob/master/docs/build_linux.md  
+
+ Please note that there is another instance of AirSim that has to be built with g++ instead of clang++ and is mentioned in the subsequent steps
+
+
+# Build AirSim using g++
+This is the other instance of AirSim which is my fork that can build with g++. [AirSim fork g++](https://github.com/aravindk2604/AirSim.git). Fork this repository and/or dowload it on your machine and navigate to the AirSim directory.  
+```
+git clone https://github.com/aravindk2604/AirSim.git
+```
+Henceforth we only discuss about the AirSim built with g++
+Export the path of the AirSim directory as an environment variable `AIRSIM_PATH` before building the project.
+  
+```
+export AIRSIM_PATH=~/your_work_directory/AirSim/
+```
 
 ## Dependencies
-This repo is supposed to run on Linux (only tested with Ubuntu 16.04, ROS Kinetic). 
+- Eigen3
 
-- Eigen
+```
+sudo apt-get install libeigen3-dev
+```
 
-      sudo apt-get install libeigen3-dev
+- MAVROS
+```
+sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+```
+- CMAKE 3.12.1
+Follow the answer posted by Teocci on Stack Exchange [link](https://askubuntu.com/questions/355565/how-do-i-install-the-latest-version-of-cmake-from-the-command-line?rq=1)
 
-- Then, you have to compile Airlib.
+- Clang++ v3.9 or newer to support C++14
 
-       cd ~ 
-       git clone https://github.com/Microsoft/AirSim.git  
+To Install it you first need the archive signature:
 
-   - Replace the /Airsim/build.sh with the build.sh in /extras/ in the current repo.
-   - Replace the /Airsim/cmake/CMakeLists.txt with the CMakeLists1.txt in /extras/ in the current repo. Rename it to CMakeLists.txt.
-   - Replace the /Airsim/cmake/MavLinkCom/CMakeLists.txt with the CMakeLists2.txt in /extras/ in the current repo. Rename it to CMakeLists.txt.
-   - Run "build.sh" from Airsim's root directory.
-  
-- If you want the tf tree to be published, you will need mavros to communicate with px4 and get its pose. Then, you need to install mavros as follows:
+```
+wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+```
 
-      sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+If you are using Ubuntu 16.04 (Xenial) then you can simply do this:
 
-  - In order to run mavros, you can follow the example in /launch/mavrosAirsim.launch. Note that you will have to change the fcu_url parameter to match the IP/Ports in which Airsim is running. All these informations can be found in the settings.json file for your Airsim configuration. The ports you are looking for are the "LogViewerPort" and the "UdpPort". Note that the settings.json file have to be configured such that "LogViewerHostIp" and "UdpIp" both have the IP of the computer that will run mavros. 
-  
-- Copy the present repo into your catkin workspace (e.g.):
+```
+sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main"
+sudo apt-get update
+```
 
-      cd ~/catkin_ws/src
-      git clone https://github.com/marcelinomalmeidan/publishAirsimImgs.git
+For other flavors of Linux, you can get more instructions from http://apt.llvm.org/.
 
-- Open the CMakeLists.txt and change the aliases for ```Airlib_addr``` and ```catkin_workspace_path``` to match your local Airlib folder and your local catkin workspace folder.
+Then run the following:
 
-      cd ~/catkin_ws
-      catkin_make
+```
+sudo apt-get update
+sudo apt-get install clang-3.9 clang++-3.9
+```
 
-## Running image publisher
-- Run Airsim.
-- Run mavros:
+Note: On Ubuntu 16.04 you may be missing libjsoncpp0 which is no longer available in the package manager, you can [download the relevant package here](https://packages.ubuntu.com/trusty/amd64/libjsoncpp0/download) and install with the command:
 
-      roslaunch airsim_img_publisher mavrosAirsim.launch
+```
+sudo dpkg -i libjsoncpp0_0.6.0~*.deb
+```
 
-- Change the IP configuration in ```/launch/pubImages```  to match the IP in which Airsim is running. Then:
+Make clang 3.9 as the default version by the command:
+```
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 60 --slave /usr/bin/clang++ clang++ /usr/bin/clang++-3.9
+```
 
-      roslaunch airsim_img_publisher pubPointCloud.launch
+- Geoid Model dataset - install this package in your global packages that is common for your entire machine.
+```
+wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
 
-## Create octomap
+sudo chmod +x install_geographiclib_datasets.sh
 
-      roslaunch airsim_img_publisher octomap.launch 
+./install_geographiclib_datasets.sh
+```
 
-## RVIZ configuration file
 
-An RVIZ configuration file can be found in ```/Extras/rvizConfig.rviz```. This configuration allows a user to see the published images, as well as the tf tree.
+- Copy the `publishAirsimImgs` repository into your catkin workspace
 
-      rosrun rviz rviz -d ~/catkin_ws/src/publishAirsimImgs/extras/rvizConfig.rviz
+```
+cd ~/catkin_ws/src/
+git clone git@github.com:aravindk2604/publishAirsimImgs.git
+cd ~/catkin_ws
+catkin_make
+```
+
+- Install Python Airsim APIs
+```
+# AirSim APIs
+pip install airsim
+```
+
+# Run
+
+- Run Unreal Engine 4.18
+- Open Blocks simulation environment
+- Run roscore in a terminal and make sure to have multiple terminal windows
+```
+roscore
+```
+- Run MAVROS
+Make sure to change the *udp* parameter inside the `mavrosAirsim.launch` to have the same ip as your machine (assuming Unreal and AirSim runs on your machine)
+Inside your catkin workspace where you have the `publishAirsimImgs` package
+```
+source devel/setup.bash
+roslaunch airsim_img_publisher mavrosAirsim.launch
+
+```
+- Run pubImages.launch after changing the `Airsim_ip`'s default value to reflect your machine's ip address.
+
+```
+roslaunch airsim_img_publisher pubImages.launch
+```
+
+- To run the Python-based Airsim interface, run the following instead of pubimages.launch:
+
+```
+rosrun airsim_img_publisher airsim_iface.py
+```
+
+
+- Run the TurtleBot's teleop node to control the car in the AirSim environment. Note, you will need the ros-kinetic-turtlebot package for this.
+```
+roslaunch turtlebot_teleop keyboard_teleop.launch
+```

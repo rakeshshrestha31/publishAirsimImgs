@@ -1,0 +1,17 @@
+<launch>
+	<node pkg="airsim_img_publisher"
+	    type="teleop_control"
+	    name="teleop_control"
+	    output="screen">
+
+    <!-- IP of the Airsim computer -->
+    <param name="Airsim_ip" value="192.168.0.107"/>
+
+    <!-- Port of the Airsim computer (0 is default!) -->
+    <param name="Airsim_port" value="41451"/>
+
+    <!-- <param name="odomTopic" value="/mavros/local_position/odom" /> -->
+
+  </node>
+
+</launch>
